@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stanford Memorial Church — Inscriptions</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0c0a14;
+    --glow: rgba(200, 170, 130, 0.12);
+  }
+
+  body {
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
+    color: #e8e0d4;
+  }
+
+  /* Ambient background */
+  .ambient {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 50% at 30% 40%, rgba(160,120,80,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 70% 60%, rgba(100,80,140,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 80% 80% at 50% 50%, rgba(200,170,130,0.03) 0%, transparent 80%);
+  }
+
+  .ambient::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+
+  /* Header */
+  .header {
+    position: relative; z-index: 2;
+    text-align: center;
+    padding: 40px 20px 10px;
+  }
+  .header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #d4c4a8;
+    text-shadow: 0 0 40px rgba(200,170,130,0.2);
+  }
+  .header p {
+    font-size: 0.78rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(200,170,130,0.4);
+    margin-top: 8px;
+  }
+  .header .context {
+    max-width: 520px;
+    margin: 18px auto 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95rem;
+    font-style: italic;
+    font-weight: 300;
+    line-height: 1.65;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    color: rgba(212, 196, 168, 0.45);
+  }
+  .header .context a {
+    color: rgba(212, 196, 168, 0.55);
+    text-decoration: underline;
+    text-decoration-color: rgba(212, 196, 168, 0.2);
+    text-underline-offset: 3px;
+    transition: color 0.3s, text-decoration-color 0.3s;
+  }
+  .header .context a:hover {
+    color: rgba(212, 196, 168, 0.8);
+    text-decoration-color: rgba(212, 196, 168, 0.5);
+  }
+
+  /* Word Cloud Container */
+  .cloud-wrap {
+    position: relative; z-index: 2;
+    width: min(90vw, 900px);
+    min-height: 420px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 10px;
+    padding: 30px 20px 40px;
+  }
+
+  /* Individual word */
+  .word {
+    position: relative;
+    cursor: pointer;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    line-height: 1.1;
+    color: rgba(212, 196, 168, 0.75);
+    transition: color 0.4s, transform 0.4s, text-shadow 0.4s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    animation: float var(--dur, 6s) ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+  }
+  .word:hover, .word:focus {
+    color: #f0dfc0;
+    transform: scale(1.12);
+    text-shadow: 0 0 24px rgba(200,170,130,0.5), 0 0 60px rgba(200,170,130,0.15);
+  }
+
+  /* Subtle pulse ring on hover */
+  .word::after {
+    content: '';
+    position: absolute;
+    inset: -6px -10px;
+    border-radius: 8px;
+    border: 1px solid rgba(200,170,130,0);
+    transition: border-color 0.4s, box-shadow 0.4s;
+    pointer-events: none;
+  }
+  .word:hover::after {
+    border-color: rgba(200,170,130,0.15);
+    box-shadow: 0 0 20px rgba(200,170,130,0.06);
+  }
+
+  /* Float animation */
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(var(--lift, -4px)); }
+  }
+
+  /* Shimmer hint animation */
+  @keyframes shimmer {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; color: #f0dfc0; text-shadow: 0 0 16px rgba(200,170,130,0.3); }
+  }
+  .word.shimmer-hint {
+    animation: shimmer 2.5s ease-in-out 1, float var(--dur, 6s) ease-in-out infinite;
+  }
+
+  /* Tap hint card */
+  .tap-hint {
+    position: relative; z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    margin: 12px auto;
+    padding: 10px 24px;
+    border-radius: 40px;
+    background: linear-gradient(135deg, rgba(200,170,130,0.08), rgba(200,170,130,0.03));
+    border: 1px solid rgba(200,170,130,0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(200,170,130,0.5);
+    animation: hintPulse 3s ease-in-out infinite;
+    transition: all 0.3s;
+  }
+  .tap-hint:hover {
+    background: rgba(200,170,130,0.1);
+    color: rgba(200,170,130,0.8);
+  }
+  .tap-hint .icon {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(200,170,130,0.3);
+    position: relative;
+  }
+  .tap-hint .icon::after {
+    content: '↗';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: rgba(200,170,130,0.5);
+  }
+  @keyframes hintPulse {
+    0%, 100% { border-color: rgba(200,170,130,0.08); }
+    50% { border-color: rgba(200,170,130,0.25); box-shadow: 0 0 30px rgba(200,170,130,0.05); }
+  }
+
+  /* ===== OVERLAY & CARD ===== */
+  .overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(8, 6, 16, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.45s;
+    padding: 20px;
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+
+  .card {
+    position: relative;
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 44px 38px 38px;
+    border-radius: 20px;
+
+    /* Glassmorphic reflective surface */
+    background:
+      linear-gradient(
+        135deg,
+        rgba(255,255,255,0.07) 0%,
+        rgba(255,255,255,0.02) 40%,
+        rgba(200,170,130,0.04) 60%,
+        rgba(255,255,255,0.06) 100%
+      );
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      inset 0 -1px 0 rgba(0,0,0,0.1),
+      0 0 80px rgba(200,170,130,0.04);
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+
+    transform: translateY(30px) scale(0.96);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s;
+    opacity: 0;
+  }
+  .overlay.open .card {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  /* Glass reflection streak */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50%;
+    border-radius: 20px 20px 0 0;
+    background: linear-gradient(
+      180deg,
+      rgba(255,255,255,0.06) 0%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Diagonal light streak */
+  .card::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(
+      115deg,
+      transparent 42%,
+      rgba(255,255,255,0.03) 44%,
+      rgba(255,255,255,0.06) 46%,
+      rgba(255,255,255,0.03) 48%,
+      transparent 50%
+    );
+    pointer-events: none;
+    animation: glassSheen 8s ease-in-out infinite;
+  }
+  @keyframes glassSheen {
+    0%, 100% { transform: translateX(-20%) rotate(0deg); }
+    50% { transform: translateX(20%) rotate(0deg); }
+  }
+
+  .card-close {
+    position: absolute;
+    top: 14px; right: 18px;
+    background: none; border: none;
+    color: rgba(200,170,130,0.4);
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 10;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+  }
+  .card-close:hover {
+    color: rgba(200,170,130,0.8);
+    background: rgba(200,170,130,0.08);
+  }
+
+  .card-theme {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: 1.4rem;
+    color: #d4c4a8;
+    margin-bottom: 24px;
+    letter-spacing: 0.06em;
+    position: relative;
+    z-index: 2;
+  }
+  .card-theme::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(200,170,130,0.4), transparent);
+    margin-top: 12px;
+  }
+
+  .quote-block {
+    position: relative; z-index: 2;
+    margin-bottom: 20px;
+    padding: 18px 20px;
+    border-radius: 12px;
+    background: rgba(200,170,130,0.03);
+    border: 1px solid rgba(200,170,130,0.06);
+  }
+  .quote-block:last-child { margin-bottom: 0; }
+
+  .quote-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem;
+    font-weight: 300;
+    line-height: 1.7;
+    color: rgba(232, 224, 212, 0.85);
+    font-style: italic;
+  }
+  .quote-src {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(200,170,130,0.3);
+    margin-top: 10px;
+  }
+
+  /* Scrollbar */
+  .card::-webkit-scrollbar { width: 4px; }
+  .card::-webkit-scrollbar-track { background: transparent; }
+  .card::-webkit-scrollbar-thumb { background: rgba(200,170,130,0.15); border-radius: 2px; }
+
+  /* Footer */
+  .footer {
+    position: relative; z-index: 2;
+    text-align: center;
+    padding: 20px 20px 12px;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(200,170,130,0.2);
+  }
+  .credit {
+    position: relative; z-index: 2;
+    text-align: center;
+    padding: 0 20px 30px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: rgba(200,170,130,0.3);
+  }
+  .credit a {
+    color: rgba(200,170,130,0.45);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(200,170,130,0.15);
+    padding-bottom: 1px;
+    transition: color 0.3s, border-color 0.3s;
+  }
+  .credit a:hover {
+    color: rgba(200,170,130,0.75);
+    border-color: rgba(200,170,130,0.4);
+  }
+
+  /* ===== FLOURISHING ROTATE ===== */
+  .flourish-box {
+    position: relative; z-index: 2;
+    margin: 0 auto 6px;
+    max-width: 600px;
+    text-align: center;
+  }
+  .flourish-inner {
+    display: inline-block;
+    padding: 20px 36px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(200,170,110,0.12), rgba(180,150,100,0.06));
+    border: 1px solid rgba(210,180,120,0.2);
+    box-shadow: 0 0 40px rgba(200,170,110,0.06), inset 0 1px 0 rgba(255,230,180,0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .flourish-prompt {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 1.15rem;
+    color: rgba(220, 195, 140, 0.75);
+    letter-spacing: 0.02em;
+  }
+  .flourish-prompt .ellipsis {
+    color: rgba(210,180,120,0.5);
+  }
+  .flourish-meaning {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: rgba(240, 225, 190, 0.85);
+    margin-top: 10px;
+    min-height: 1.6em;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  .flourish-meaning.fade-out {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  .flourish-meaning.fade-in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient"></div>
+
+<header class="header">
+  <h1>Stanford Memorial Church</h1>
+  <p>Inscriptions &amp; Quotes</p>
+  <div class="context">Compiled from photographs of the inscriptions along the interior walls of Stanford Memorial Church, captured during the final class of the <a href="https://explorecourses.stanford.edu/search?q=GSBGEN%20396" target="_blank" rel="noopener">AI for Human Flourishing</a> course with Prof. Jennifer Aaker.</div>
+</header>
+
+<div class="tap-hint" onclick="randomOpen()">
+  <span class="icon"></span>
+  <span>Tap to see the full inscription</span>
+</div>
+
+<div class="cloud-wrap" id="cloud"></div>
+
+<div class="flourish-box">
+  <div class="flourish-inner">
+    <div class="flourish-prompt">Human Flourishing means<span class="ellipsis">...</span></div>
+    <div class="flourish-meaning fade-in" id="flourishMeaning"></div>
+  </div>
+</div>
+
+<div class="footer">From the walls of Stanford Memorial Church</div>
+<div class="credit">made with &#10084;&#65039; by <a href="https://www.heyarinze.com" target="_blank" rel="noopener">Arinze Obiezue</a></div>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay" onclick="closeCard(event)">
+  <div class="card" id="card">
+    <button class="card-close" onclick="closeCard(event)">✕</button>
+    <div class="card-theme" id="cardTheme"></div>
+    <div id="cardBody"></div>
+  </div>
+</div>
+
+<script>
+// ── DATA: themes mapped to unique quotes ──
+const themes = {
+  "Love": {
+    size: 3.2,
+    quotes: [
+      { text: "A life that is founded on the principle of goodness, love, wisdom and power that represents the Christ, has a lasting foundation, and can be trusted.\n\nWe speak of love, but what do we know about it, unless we see the power of love manifested; unless we are given the power to bestow, and a willing heart to bestow it upon, and within humanity. We say God is love, but if we do not feel the power of His love, we do not know anything about it. To be loved by others makes the power of love within our hearts grow.", src: "IMG_2864" },
+      { text: "In the great record above, our names are written in characters of love — characters which love for our dear Jesus alone can read, and which by his great love for us alone have been graven.", src: "IMG_2889" },
+      { text: "To acknowledge God, is often done without acknowledging God's great love for us, and it is His love and tender care and wise leading we should all reflect upon more than we do, — much more if we would do our duty.", src: "IMG_2860" }
+    ]
+  },
+  "Faith": {
+    size: 2.8,
+    quotes: [
+      { text: "The Cross is the emblem of faith, hope and of those ineffable virtues of the soul that abide forever, that can never be outgrown even on the loftiest planes of being in the mighty universe of God.", src: "IMG_2862" },
+      { text: "God knows what His Children want before they ask, but it proves their faith in Him to pray for what they want.", src: "IMG_2870" },
+      { text: "The best form of religion is, trust in God and a firm belief in the immortality of the soul, life everlasting.", src: "IMG_2867" }
+    ]
+  },
+  "Wisdom": {
+    size: 2.5,
+    quotes: [
+      { text: "Knowledge is intelligence and its impress comes upon the mind. Wisdom is the desire of the heart prompted by God's highest and most Divine nature and comprises all knowledge. Wisdom is the highest spiritual intelligence, while the natural man, through knowledge, can know nothing of wisdom.\n\nA man may have great intelligence and yet have nothing of the Christ life within him.", src: "IMG_2856" }
+    ]
+  },
+  "Eternity": {
+    size: 2.6,
+    quotes: [
+      { text: "An eternal existence in prospect converts the whole of your present state into a mere vestibule of the grand court of life; a beginning, an introduction to what is to follow; the entrance into that immeasurable extent of being which is the true life of man. The best thoughts, affections and aspirations of a great soul are fixed on the infinitude of eternity. Destined, as such a soul is for immortality, it finds all that is not eternal too short, all that is not infinite too small.", src: "IMG_2866" },
+      { text: "May we belong to God forever in this mortal life, serving Him faithfully through its trials, bearing the cross after Him, and may we be His forever in life eternal, with the whole Celestial court.", src: "IMG_2854" }
+    ]
+  },
+  "Kindness": {
+    size: 2.3,
+    quotes: [
+      { text: "May the peace which no earthly disturbance can mar, which is of the Father, through His inspiration and love, fill your hearts, and enable you to go on in the journey of life with a feeling of trust and confidence that nothing can disturb. It is not love for God, but love for the neighbor, good will toward men, universal kindness and gentleness, that make saints on earth. One must give as well as take of goodness, gentleness, and unselfish kindness to meet with God's approval.", src: "IMG_2881" },
+      { text: "If we do good deeds to others and try to help them to live happier and better lives by being kind to them, and teaching them of the God germ within themselves, we in that way sow the seed.", src: "IMG_2883" }
+    ]
+  },
+  "Service": {
+    size: 2.2,
+    quotes: [
+      { text: "The highest service may be prepared for and done in the humblest surroundings. In silence, in waiting, in obscure, unnoticed offices, in years of uneventful, unrecorded duties, the Son of God grew and waxed strong.", src: "IMG_2890" },
+      { text: "God gives all some work to do; if not great deeds then small ones, as the cup of cold water to one of His children. Yes, even less than that, — a word of advice, something lent to another, a little vexation patiently borne, the fault or thoughtlessness of another repaired without his knowledge. God will recompense it all a thousand-fold.", src: "IMG_2877" }
+    ]
+  },
+  "Peace": {
+    size: 2.4,
+    quotes: [
+      { text: "May the peace which no earthly disturbance can mar, which is of the Father, through His inspiration and love, fill your hearts, and enable you to go on in the journey of life with a feeling of trust and confidence that nothing can disturb.", src: "IMG_2881" },
+      { text: "Events are messengers of either Divine goodness or justice. Each has a mission to fulfill, and, as it comes from God, accomplish it in peace.", src: "IMG_2857" }
+    ]
+  },
+  "Soul": {
+    size: 2.5,
+    quotes: [
+      { text: "Religion is intended as a comfort, a solace, a necessity to the soul's welfare; and whichever form of religion furnishes the greatest comfort, the greatest solace, it is the form which should be adopted, be its name what it will.", src: "IMG_2867" },
+      { text: "The best thoughts, affections and aspirations of a great soul are fixed on the infinitude of eternity. Destined, as such a soul is for immortality, it finds all that is not eternal too short, all that is not infinite too small.", src: "IMG_2866" }
+    ]
+  },
+  "Goodness": {
+    size: 2.0,
+    quotes: [
+      { text: "Events are messengers of either Divine goodness or justice. Each has a mission to fulfill, and, as it comes from God, accomplish it in peace. And, in sending them, the good Father also sends means by which they may be endured, — perhaps averted.\n\nRemedies in sickness. Love in trouble. Comfort in weakness. Renewed hope in disappointment. Tears in sorrow. Smiles to follow tears.", src: "IMG_2857" },
+      { text: "A life that is founded on the principle of goodness, love, wisdom and power that represents the Christ, has a lasting foundation, and can be trusted.", src: "IMG_2864" }
+    ]
+  },
+  "Christ": {
+    size: 2.6,
+    quotes: [
+      { text: "True life is the principles of Christ lived. There is no other life that is true. To condense it still more, the true life is the Christ life lived.", src: "IMG_2870" },
+      { text: "The world is new to every soul when Christ has entered into it.\n\nWe can never perish if we remain in the arms of our Father Almighty.", src: "IMG_2888" }
+    ]
+  },
+  "Duty": {
+    size: 1.6,
+    quotes: [
+      { text: "Regard not the appearance of things you are to do, but Him who commands them, and who, when He pleases, can accomplish His glory and our perfection through the most trifling things.\n\nWhen a person thinks a duty is beneath him, he places himself above God, for He deals with that same duty.\n\nLet us never be sad, save at having offended God.", src: "IMG_2878" }
+    ]
+  },
+  "Happiness": {
+    size: 1.8,
+    quotes: [
+      { text: "The instinct given to all of God's children to seek happiness is a proof that happiness is a reality and within the reach of all.", src: "IMG_2884" },
+      { text: "If we do good deeds to others and try to help them to live happier and better lives by being kind to them, and teaching them of the God germ within themselves, we in that way sow the seed.", src: "IMG_2883" }
+    ]
+  },
+  "Hope": {
+    size: 2.1,
+    quotes: [
+      { text: "The Cross is the emblem of faith, hope and of those ineffable virtues of the soul that abide forever, that can never be outgrown even on the loftiest planes of being in the mighty universe of God.", src: "IMG_2862" },
+      { text: "Renewed hope in disappointment. Tears in sorrow. Smiles to follow tears.", src: "IMG_2857" }
+    ]
+  },
+  "Sorrow": {
+    size: 1.7,
+    quotes: [
+      { text: "There are but few on earth free from cares, none but carry burdens of sorrow, and if all were asked to make a package of their troubles, and throw this package on a common pile, and then were asked to go and choose a package which they were willing to bear, all would select their own package again.\n\nYour heartaches may be great, burdens heavy, but look about you, and with whom would you change?", src: "IMG_2885" }
+    ]
+  },
+  "Ambition": {
+    size: 1.9,
+    quotes: [
+      { text: "A noble ambition is among the most helpful influences of student life, and the higher this ambition is, the better. No man can work well unless he can speak as the Great Master did of the joy set before Him.\n\nAnd this leads to the greatest of all safeguards, and the most encouraging of all stimulating influences to a noble life, — that is, the power of personal religion. We need something outside of and beyond ourselves. Remember, you are not your own; you are bought with the precious blood of Jesus.", src: "IMG_2886" }
+    ]
+  },
+  "Heaven": {
+    size: 2.0,
+    quotes: [
+      { text: "Earth grants joys that are great; but transplant such joys to Heaven, ennoble them through the ennobling love of God, and they grow to a magnitude beyond the comprehension of earth mind.", src: "IMG_2892" },
+      { text: "God in His infinite wisdom, gives to the poor, blessings (by way of compensation) which the wealthy do not attain — the giving and receiving of heart offerings without price, deeds that win crowns and scepters in Heaven.", src: "IMG_2893" }
+    ]
+  },
+  "Nature": {
+    size: 1.5,
+    quotes: [
+      { text: "As we grow and improve, we will love more the beautiful everywhere. Praise God for the gift of nature, for giving so much of everything that is beautiful in all the universe, because His life is in it all.", src: "IMG_2880" }
+    ]
+  },
+  "Truth": {
+    size: 1.8,
+    quotes: [
+      { text: "The test of a Christian life lies in deeds and actions, not in words, a true follower of truth and Godliness, not a follower of the impressions of the flesh nor the impress of the intellect alone, but endeavoring to let the heart be touched with the Divine principle of God's truth, and that alone makes Christians.", src: "IMG_2884" }
+    ]
+  },
+  "Humility": {
+    size: 1.6,
+    quotes: [
+      { text: "The highest service may be prepared for and done in the humblest surroundings. In silence, in waiting, in obscure, unnoticed offices, in years of uneventful, unrecorded duties, the Son of God grew and waxed strong.", src: "IMG_2890" },
+      { text: "We must not desire all to begin by perfection. It matters little how we begin provided we be resolved to go on well and end well.", src: "IMG_2891" }
+    ]
+  },
+  "Comfort": {
+    size: 1.9,
+    quotes: [
+      { text: "Religion is intended as a comfort, a solace, a necessity to the soul's welfare; and whichever form of religion furnishes the greatest comfort, the greatest solace, it is the form which should be adopted, be its name what it will.\n\nThe best form of religion is, trust in God and a firm belief in the immortality of the soul, life everlasting.", src: "IMG_2867" }
+    ]
+  },
+  "Purpose": {
+    size: 1.7,
+    quotes: [
+      { text: "Man, like every other individuality, has an object and a purpose to fulfill; and, when he comprehends this, he will think too much of himself to stoop to any material action that shall bring him down from the highest position on the throne of his nature.", src: "IMG_2860" }
+    ]
+  },
+  "Spirit": {
+    size: 1.5,
+    quotes: [
+      { text: "Thoughts and words travel just as God's life travels. They do not travel like an individual, but you breathe your spiritual life into the atmosphere as you do your breath, and some one else breathes it in. Those not present still receive it, for it permeates space, and all live in it and receive from it according to their unfoldment.", src: "IMG_2876" }
+    ]
+  },
+  "Deeds": {
+    size: 1.6,
+    quotes: [
+      { text: "The test of a Christian life lies in deeds and actions, not in words.", src: "IMG_2884" },
+      { text: "God gives all some work to do; if not great deeds then small ones, as the cup of cold water to one of His children.", src: "IMG_2877" }
+    ]
+  },
+  "Immortality": {
+    size: 1.8,
+    quotes: [
+      { text: "Destined, as such a soul is for immortality, it finds all that is not eternal too short, all that is not infinite too small.", src: "IMG_2866" },
+      { text: "The best form of religion is, trust in God and a firm belief in the immortality of the soul, life everlasting.", src: "IMG_2867" }
+    ]
+  },
+  "Blessings": {
+    size: 1.5,
+    quotes: [
+      { text: "God in His infinite wisdom, gives to the poor, blessings (by way of compensation) which the wealthy do not attain — the giving and receiving of heart offerings without price, deeds that win crowns and scepters in Heaven.", src: "IMG_2893" }
+    ]
+  }
+};
+
+// ── BUILD CLOUD ──
+const cloud = document.getElementById('cloud');
+const keys = Object.keys(themes);
+
+// Shuffle for visual variety
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+shuffle(keys).forEach((key, i) => {
+  const el = document.createElement('span');
+  el.className = 'word';
+  el.textContent = key;
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('role', 'button');
+  el.setAttribute('aria-label', `Explore quotes about ${key}`);
+
+  const size = themes[key].size;
+  el.style.fontSize = size + 'rem';
+  el.style.setProperty('--dur', (5 + Math.random() * 5) + 's');
+  el.style.setProperty('--delay', (-Math.random() * 6) + 's');
+  el.style.setProperty('--lift', (-2 - Math.random() * 6) + 'px');
+
+  // Vary opacity by importance
+  const opacity = 0.45 + (size / 3.2) * 0.45;
+  el.style.color = `rgba(212, 196, 168, ${opacity})`;
+
+  el.addEventListener('click', () => openCard(key));
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter') openCard(key); });
+
+  cloud.appendChild(el);
+});
+
+// ── SHIMMER HINTS ──
+function triggerShimmer() {
+  const words = document.querySelectorAll('.word');
+  const idx = Math.floor(Math.random() * words.length);
+  words[idx].classList.add('shimmer-hint');
+  setTimeout(() => words[idx].classList.remove('shimmer-hint'), 2500);
+}
+setInterval(triggerShimmer, 3500);
+setTimeout(triggerShimmer, 1200);
+
+// ── CARD OPEN / CLOSE ──
+const overlay = document.getElementById('overlay');
+const cardTheme = document.getElementById('cardTheme');
+const cardBody = document.getElementById('cardBody');
+
+function openCard(key) {
+  const data = themes[key];
+  cardTheme.textContent = key;
+  cardBody.innerHTML = '';
+
+  data.quotes.forEach(q => {
+    const block = document.createElement('div');
+    block.className = 'quote-block';
+
+    const paragraphs = q.text.split('\n\n').map(p =>
+      `<p style="margin-bottom:10px">${p.replace(/\n/g, '<br>')}</p>`
+    ).join('');
+
+    block.innerHTML = `
+      <div class="quote-text">${paragraphs}</div>
+      <div class="quote-src">${q.src}</div>
+    `;
+    cardBody.appendChild(block);
+  });
+
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCard(e) {
+  if (e.target === overlay || e.target.classList.contains('card-close')) {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+});
+
+function randomOpen() {
+  const k = keys[Math.floor(Math.random() * keys.length)];
+  openCard(k);
+}
+
+// ── HUMAN FLOURISHING MEANINGS ──
+const flourishMeanings = [
+  "loving so deeply that your heart overflows into the lives of others",
+  "finding trust and confidence that nothing can disturb",
+  "sowing kindness wherever you go, and watching it bloom in others",
+  "seeking wisdom not of the mind alone, but of the heart prompted by something greater",
+  "doing small, unnoticed deeds with a faithful spirit",
+  "bearing sorrow without breaking — and choosing to carry your own burdens with grace",
+  "seeing the world as new, again and again, with wonder",
+  "living a life founded on goodness, love, wisdom, and power that can be trusted",
+  "breathing your spiritual life into the atmosphere so that others may receive it",
+  "giving heart offerings without price",
+  "discovering that happiness is a reality and within the reach of all",
+  "letting your best thoughts and aspirations be fixed on the infinite",
+  "growing strong in silence, in waiting, in obscure and unnoticed offices",
+  "knowing that remedies arrive in sickness, love in trouble, comfort in weakness",
+  "praising the beautiful everywhere — in all the universe — because life is in it all",
+  "never beginning by perfection, but resolving to go on well and end well",
+  "understanding that thoughts and words travel, unseen, and touch lives you'll never know",
+  "pursuing a noble ambition as the most helpful influence of your life",
+  "giving as well as taking of goodness, gentleness, and unselfish kindness",
+  "recognizing the God germ within yourself, and within everyone you meet",
+  "enduring trials with peace, knowing each event carries its own message",
+  "building a lasting foundation — not of things, but of how you live"
+];
+
+let flourishIdx = -1;
+const flourishEl = document.getElementById('flourishMeaning');
+
+function cycleMeaning() {
+  let newIdx;
+  do {
+    newIdx = Math.floor(Math.random() * flourishMeanings.length);
+  } while (newIdx === flourishIdx && flourishMeanings.length > 1);
+  flourishIdx = newIdx;
+
+  flourishEl.classList.remove('fade-in');
+  flourishEl.classList.add('fade-out');
+
+  setTimeout(() => {
+    flourishEl.textContent = flourishMeanings[flourishIdx];
+    flourishEl.classList.remove('fade-out');
+    flourishEl.classList.add('fade-in');
+  }, 350);
+}
+
+// Auto-rotate every 3 seconds
+setTimeout(cycleMeaning, 800);
+setInterval(cycleMeaning, 3000);
+</script>
+</body>
+</html>
